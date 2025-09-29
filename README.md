@@ -39,8 +39,8 @@ This repository contains Terraform modules for automating infrastructure deploym
 To use a module, include it in your Terraform configuration:
 
 ```hcl
-module "network" {
-    source = "./modules/network"
+module "vpc" {
+    source = "./modules/vpc"
     # module-specific variables
 }
 ```
