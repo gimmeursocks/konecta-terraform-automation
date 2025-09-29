@@ -11,3 +11,13 @@ resource "google_compute_subnetwork" "subnet" {
   region        = var.region
   network       = google_compute_network.vpc.id
 }
+
+# Optional firewall rules
+resource "google_compute_firewall" "default" {
+  name    = "${var.vpc_name}-allow-internal"
+  network = google_compute_network.vpc.name
+  allow {
+    protocol = "all"
+  }
+  source_ranges = ["10.0.0.0/8"]
+}
