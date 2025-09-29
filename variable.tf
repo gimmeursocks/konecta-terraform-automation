@@ -1,0 +1,17 @@
+variable "project_id" {}
+variable "vpc_name" {}
+variable "subnet_name" {}
+variable "cidr" {}
+variable "region" {}
+variable "my_bucket_name" {}
+variable "location" {}
+variable "instance_name" {}
+variable "machine_type" {}
+variable "image" {} 
+variable "network" {}
+variable "sql_instance_name" {}
+variable "database_version" {}
+variable "sql_machine_type" {}
+variable "cloudrun_name" {}
+variable "cloudrun_location" {}
+variable "cloudrun_image" {}
