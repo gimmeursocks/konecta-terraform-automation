@@ -1,8 +1,3 @@
-provider "google" {
-  project = var.project_id
-  region  = var.region
-}
-
 module "network" {
   source      = "./modules/vpc"
   project_id  = var.project_id
@@ -13,14 +8,13 @@ module "network" {
 }
 
 module "storage" {
-  source         = "./modules/storage"
-  project_id     = var.project_id
-  my_bucket_name = var.my_bucket_name 
+  source         = "./modules/gcs"
+  my-bucket-name = var.my_bucket_name 
   location       = var.location
 }
 
 module "compute" {
-  source        = "./modules/cloud compute"
+  source        = "./modules/compute"
   instance_name = var.instance_name
   machine_type  = var.machine_type
   image         = var.image
@@ -28,7 +22,7 @@ module "compute" {
 } 
 
 module "cloud_sql" {
-  source           = "./modules/cloud SQL"
+  source           = "./modules/cloudsql"
   instance_name    = var.sql_instance_name
   database_version = var.database_version
   region           = var.region
@@ -36,7 +30,7 @@ module "cloud_sql" {
 }
 
 module "cloud_run" {
-  source        = "./modules/cloud run"
+  source        = "./modules/serverless"
   cloudrun_name = var.cloudrun_name
   location      = var.location
   image         = var.image
