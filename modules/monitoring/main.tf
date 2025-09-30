@@ -2,7 +2,7 @@
 resource "google_monitoring_alert_policy" "high_cpu" {
   project      = var.project_id
   display_name = "${var.name_prefix}-high-cpu"
-  combiner = var.cpu_threshold
+  combiner = "OR"
 
   conditions {
     display_name = "VM CPU > ${var.cpu_threshold}%"

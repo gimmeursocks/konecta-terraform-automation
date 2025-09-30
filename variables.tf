@@ -85,12 +85,6 @@ variable "force_destroy" {
   default     = false
 }
 
-variable "labels" {
-  description = "Map of labels to assign to the bucket."
-  type        = map(string)
-  default     = {}
-}
-
 variable "versioning" {
   description = "Enable object versioning."
   type        = bool

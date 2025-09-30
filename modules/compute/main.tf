@@ -1,4 +1,4 @@
-resource "google_compute_instance" "vm_instance" {
+resource "google_compute_instance" "vm" {
   project      = var.project_id
   name         = var.instance_name
   machine_type = var.machine_type

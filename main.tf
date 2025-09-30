@@ -1,4 +1,11 @@
-module "network" {
+module "project" {
+  source = "./modules/project"
+  project_id = var.project_id
+  billing_account = var.billing_account
+  organization_id = var.organization_id
+}
+
+module "vpc" {
   source      = "./modules/vpc"
   project_id  = var.project_id
   vpc_name    = var.vpc_name
@@ -79,9 +86,6 @@ module "loadbalancer" {
   source     = "./modules/loadbalancer"
   project_id = var.project_id
   name       = var.lb_name
-  backend_instances = [
-    google_compute_instance_group.my_group.self_link
-  ]
 }
 
 module "pubsub" {

@@ -1,4 +1,4 @@
-resource "google_cloud_run_service" "default" {
+resource "google_cloud_run_service" "service" {
   project  = var.project_id
   name     = var.cloudrun_name
   location = var.location
