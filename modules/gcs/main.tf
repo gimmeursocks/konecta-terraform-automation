@@ -1,14 +1,29 @@
-resource "google_storage_bucket" "bucket" {
-  project       = var.project_id
-  name          = var.bucket_name
-  location      = var.location
-  storage_class = var.storage_class
-  force_destroy = var.force_destroy
+resource "google_storage_bucket" "buckets" {
+  for_each = var.buckets
 
-  labels = var.labels
+  project       = var.project_id
+  name          = each.key
+  location      = lookup(each.value, "location", var.default_location)
+  storage_class = lookup(each.value, "storage_class", "STANDARD")
+
+  uniform_bucket_level_access = lookup(each.value, "uniform_bucket_level_access", true)
+
   versioning {
-    enabled = var.versioning
+    enabled = lookup(each.value, "versioning", false)
   }
 
-  uniform_bucket_level_access = var.uniform_access
+  labels = merge(
+    var.labels,
+    lookup(each.value, "labels", {})
+  )
+
+  force_destroy = lookup(each.value, "force_destroy", false)
+}
+
+resource "google_storage_bucket_iam_member" "members" {
+  for_each = var.bucket_iam_members
+
+  bucket = google_storage_bucket.buckets[each.value.bucket].name
+  role   = each.value.role
+  member = each.value.member
 }

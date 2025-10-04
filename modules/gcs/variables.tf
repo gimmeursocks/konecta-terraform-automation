@@ -1,27 +1,24 @@
 variable "project_id" {
-  description = "GCP project ID where the bucket will be created."
-  type        = string
-}
-variable "bucket_name" {
-  description = "Name of the storage bucket"
+  description = "GCP project ID where the buckets will be created."
   type        = string
 }
 
-variable "location" {
+variable "default_location" {
   description = "Location for the storage bucket"
   type        = string
+  default     = "US"
 }
 
-variable "storage_class" {
-  description = "Storage class (STANDARD, NEARLINE, COLDLINE, ARCHIVE)."
-  type        = string
-  default     = "STANDARD"
-}
-
-variable "force_destroy" {
-  description = "Set to true to delete bucket even if it contains objects."
-  type        = bool
-  default     = false
+variable "buckets" {
+  description = "Map of buckets to create"
+  type = map(object({
+    location                    = optional(string)
+    storage_class               = optional(string)
+    uniform_bucket_level_access = optional(bool)
+    versioning                  = optional(bool)
+    force_destroy               = optional(bool)
+    labels                      = optional(map(string))
+  }))
 }
 
 variable "labels" {
@@ -30,14 +27,12 @@ variable "labels" {
   default     = {}
 }
 
-variable "versioning" {
-  description = "Enable object versioning."
-  type        = bool
-  default     = false
-}
-
-variable "uniform_access" {
-  description = "Enable uniform bucket-level access."
-  type        = bool
-  default     = true
+variable "bucket_iam_members" {
+  description = "IAM members for buckets"
+  type = map(object({
+    bucket = string
+    role   = string
+    member = string
+  }))
+  default = {}
 }
