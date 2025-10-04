@@ -8,9 +8,12 @@ variable "vpc_name" {
   type        = string
 }
 
-variable "subnet_name" {
-  description = "Name of the subnet"
-  type        = string
+variable "subnets" {
+  description = "Map of subnets to create"
+  type = map(object({
+    ip_cidr_range = string
+    region        = string
+  }))
 }
 
 variable "cidr" {

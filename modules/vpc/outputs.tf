@@ -1,15 +1,26 @@
-output "network_name" {
-  value = google_compute_network.vpc.name
+output "network_id" {
+  description = "Network id"
+  value       = google_compute_network.main.id
 }
 
-output "subnet_names" {
-  value = [for s in google_compute_subnetwork.subnet : s.name]
+output "network_name" {
+  description = "Network name"
+  value       = google_compute_network.main.name
 }
 
 output "network_self_link" {
-  value = google_compute_network.vpc.self_link
+  description = "Network self link"
+  value       = google_compute_network.main.self_link
 }
 
-output "subnet_self_link" {
-  value = google_compute_subnetwork.subnet.self_link
+output "subnets" {
+  description = "Map of subnet details"
+  value = {
+    for k, v in google_compute_subnetwork.subnets : k => {
+      id        = v.id
+      self_link = v.self_link
+      ip_cidr   = v.ip_cidr_range
+      region    = v.region
+    }
+  }
 }
