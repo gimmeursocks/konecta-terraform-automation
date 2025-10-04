@@ -1,5 +1,10 @@
+variable "project_name" {
+  description = "The project name"
+  type        = string
+}
+
 variable "project_id" {
-  description = "The unique project ID (also used as name)."
+  description = "The unique project ID (used as name)."
   type        = string
 }
 
@@ -22,7 +27,12 @@ variable "labels" {
 variable "apis" {
   description = "List of APIs to enable."
   type        = list(string)
-  default     = []
+  default = [
+    "compute.googleapis.com",
+    "iam.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "serviceusage.googleapis.com"
+  ]
 }
 
 variable "create_service_account" {

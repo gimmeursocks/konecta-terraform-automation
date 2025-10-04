@@ -1,9 +1,16 @@
 output "project_id" {
-  value = google_project.this.project_id
+  value = google_project.main.project_id
+  description = "The project id"
 }
 
 output "project_number" {
-  value = google_project.this.number
+  value = google_project.main.number
+  description = "The project number"
+}
+
+output "project_name" {
+  value       = google_project.main.name
+  description = "The project name"
 }
 
 output "service_account_email" {
