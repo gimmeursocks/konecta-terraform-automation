@@ -4,13 +4,25 @@ variable "project_id" {
 }
 
 variable "cluster_name" {
-  description = "Name of the GKE cluster."
+  description = "Name of the GKE cluster"
   type        = string
+}
+
+variable "regional" {
+  description = "Create a regional cluster"
+  type        = bool
+  default     = true
 }
 
 variable "region" {
   description = "Region or zone (e.g., us-central1)."
   type        = string
+}
+
+variable "zone" {
+  description = "GCP zone (for zonal clusters)"
+  type        = string
+  default     = null
 }
 
 variable "network" {
@@ -24,14 +36,20 @@ variable "subnetwork" {
 }
 
 # Node pool variables
-variable "node_count" {
-  description = "Number of nodes in the node pool."
-  type        = number
-  default     = 1
+variable "node_pools" {
+  description = "Map of node pools"
+  type = map(object({
+    machine_type       = string
+    initial_node_count = optional(number)
+    disk_size_gb       = optional(number)
+    spot               = optional(bool)
+    labels             = optional(map(string))
+    tags               = optional(list(string))
+  }))
 }
 
-variable "machine_type" {
-  description = "Machine type for nodes (e.g., e2-medium)."
-  type        = string
-  default     = "e2-medium"
+variable "labels" {
+  description = "Cluster labels"
+  type        = map(string)
+  default     = {}
 }
