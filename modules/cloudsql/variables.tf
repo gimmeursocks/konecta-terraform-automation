@@ -4,43 +4,60 @@ variable "project_id" {
 }
 
 variable "instance_name" {
-  description = "the name of the Cloud SQL instance"
+  description = "The name of the Cloud SQL instance"
   type        = string
 }
 
 variable "database_version" {
-  description = "the database version for the Cloud SQL instance"
+  description = "The database version for the Cloud SQL instance"
   type        = string
 }
 
 variable "region" {
-  description = "the region for the Cloud SQL instance"
+  description = "The region for the Cloud SQL instance"
   type        = string
 }
 
-variable "machine_type" {
-  description = "the machine type for the Cloud SQL instance"
+variable "tier" {
+  description = "The machine tier for the Cloud SQL instance"
   type        = string
+  default     = "db-f1-micro"
 }
 
-variable "db_name" {
-  description = "Default database name."
-  type        = string
+variable "disk_size_gb" {
+  description = "Disk size in GB"
+  type        = number
+  default     = 10
 }
 
-variable "db_user" {
-  description = "Database username."
+variable "disk_type" {
+  description = "Disk type (PD_SSD or PD_HDD)"
   type        = string
+  default     = "PD_SSD"
 }
 
-variable "db_password" {
-  description = "Database user password."
-  type        = string
-  sensitive   = true
+variable "disk_autoresize" {
+  description = "Enable disk autoresize"
+  type        = bool
+  default     = true
 }
 
 variable "deletion_protection" {
   description = "Prevent accidental deletion."
   type        = bool
   default     = true
+}
+
+variable "databases" {
+  description = "List of databases to create"
+  type        = list(string)
+  default     = []
+}
+
+variable "users" {
+  description = "Map of database users"
+  type = map(object({
+    password = string
+  }))
+  default = {}
 }
