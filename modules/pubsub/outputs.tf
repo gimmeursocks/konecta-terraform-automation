@@ -1,9 +1,9 @@
-output "topic_name" {
-  description = "The name of the created Pub/Sub topic."
-  value       = google_pubsub_topic.topic.name
+output "topic_names" {
+  description = "The name of the created Pub/Sub topics"
+  value       = { for k, v in google_pubsub_topic.topics : k => v.name }
 }
 
-output "subscription_name" {
-  description = "The name of the created Pub/Sub subscription."
-  value       = google_pubsub_subscription.subscription.name
+output "subscription_names" {
+  description = "The name of the created Pub/Sub subscriptions"
+  value       = { for k, v in google_pubsub_subscription.subscriptions : k => v.name }
 }
