@@ -35,14 +35,8 @@ variable "apis" {
   ]
 }
 
-variable "create_service_account" {
-  description = "Whether to create a default service account."
-  type        = bool
-  default     = false
-}
-
-variable "service_account_roles" {
-  description = "Roles to assign to the default service account."
-  type        = list(string)
-  default     = []
+variable "iam_members" {
+  description = "IAM role to member mappings"
+  type        = map(string)
+  default     = {}
 }

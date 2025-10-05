@@ -15,13 +15,3 @@ variable "subnets" {
     region        = string
   }))
 }
-
-variable "cidr" {
-  description = "CIDR range for the subnet"
-  type        = string
-}
-
-variable "region" {
-  description = "Region for the subnet"
-  type        = string
-}

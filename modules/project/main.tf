@@ -17,18 +17,10 @@ resource "google_project_service" "enabled_apis" {
   disable_dependent_services = false
 }
 
-# Optional: create a default service account (if enabled)
-resource "google_service_account" "default" {
-  count        = var.create_service_account ? 1 : 0
-  account_id   = "${var.project_id}-sa"
-  display_name = "${var.project_id} Service Account"
-  project      = google_project.main.project_id
-}
+resource "google_project_iam_member" "project_roles" {
+  for_each = var.iam_members
 
-# Optional: attach roles to the service account
-resource "google_project_iam_member" "sa_roles" {
-  for_each = var.create_service_account ? toset(var.service_account_roles) : toset([])
-  project  = google_project.main.project_id
-  role     = each.value
-  member   = "serviceAccount:${google_service_account.default[0].email}"
+  project = google_project.main.project_id
+  role    = each.key
+  member  = each.value
 }
