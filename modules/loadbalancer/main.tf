@@ -6,8 +6,8 @@ resource "google_compute_global_address" "lb_ip" {
 }
 
 resource "google_compute_backend_service" "main" {
-  project       = var.project_id
-  name          = "${var.name}-backend"
+  project = var.project_id
+  name    = "${var.name}-backend"
 
   protocol    = var.protocol
   port_name   = var.backend_port_name
@@ -53,7 +53,7 @@ resource "google_compute_target_http_proxy" "main" {
 
 resource "google_compute_global_forwarding_rule" "https" {
   count = var.enable_ssl ? 1 : 0
-  
+
   project    = var.project_id
   name       = "${var.name}-https"
   target     = google_compute_target_https_proxy.main[0].id
@@ -63,7 +63,7 @@ resource "google_compute_global_forwarding_rule" "https" {
 
 resource "google_compute_global_forwarding_rule" "http" {
   count = var.enable_ssl ? 0 : 1
-  
+
   project    = var.project_id
   name       = "${var.name}-http"
   target     = google_compute_target_http_proxy.main[0].id

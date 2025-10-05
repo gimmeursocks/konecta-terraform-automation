@@ -1,6 +1,6 @@
 module "project" {
-  source = "./modules/project"
-  project_id = var.project_id
+  source          = "./modules/project"
+  project_id      = var.project_id
   billing_account = var.billing_account
   organization_id = var.organization_id
 }
@@ -97,9 +97,9 @@ module "pubsub" {
 }
 
 module "monitoring" {
-  source               = "./modules/monitoring"
-  project_id           = var.project_id
-  name_prefix          = var.alert_name_prefix
-  cpu_threshold        = var.alert_cpu_threshold
-  logs_bucket          = var.monitoring_logs_bucket
+  source        = "./modules/monitoring"
+  project_id    = var.project_id
+  name_prefix   = var.alert_name_prefix
+  cpu_threshold = var.alert_cpu_threshold
+  logs_bucket   = var.monitoring_logs_bucket
 }

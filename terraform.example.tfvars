@@ -1,8 +1,8 @@
 # Root project setup
-project_id       = ""
-organization_id  = ""
-billing_account  = ""
-region           = ""
+project_id      = ""
+organization_id = ""
+billing_account = ""
+region          = ""
 
 # labels        = {}
 # apis          = []
@@ -61,7 +61,7 @@ subscription_name = ""
 # pubsub_labels    = {}
 
 # Monitoring
-alert_name_prefix        = ""
-monitoring_logs_bucket   = ""
+alert_name_prefix      = ""
+monitoring_logs_bucket = ""
 # alert_cpu_threshold     = 80
 # alert_notification_channels = []
