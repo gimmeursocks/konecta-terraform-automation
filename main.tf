@@ -1,105 +1,191 @@
-module "project" {
-  source          = "./modules/project"
-  project_id      = var.project_id
-  billing_account = var.billing_account
-  organization_id = var.organization_id
-}
-
-module "vpc" {
-  source      = "./modules/vpc"
-  project_id  = var.project_id
-  vpc_name    = var.vpc_name
-  subnet_name = var.subnet_name
-  cidr        = var.cidr
-  region      = var.region
-}
-
-module "gcs" {
-  source        = "./modules/gcs"
-  project_id    = var.project_id
-  bucket_name   = var.bucket_name
-  location      = var.location
-  storage_class = var.storage_class
-  force_destroy = var.force_destroy
-
-  labels = var.labels
-
-  versioning     = var.versioning
-  uniform_access = var.uniform_access
-}
-
-module "compute" {
-  source        = "./modules/compute"
-  project_id    = var.project_id
-  instance_name = var.instance_name
-  machine_type  = var.machine_type
-  zone          = var.zone
-
-  image        = var.image
-  disk_size_gb = var.disk_size_gb
-
-  network    = module.vpc.network_self_link
-  subnetwork = module.vpc.subnet_self_link
-
-  tags = var.tags
-}
-
-module "cloud_sql" {
-  source              = "./modules/cloudsql"
-  project_id          = var.project_id
-  instance_name       = var.sql_instance_name
-  database_version    = var.database_version
-  region              = var.region
-  deletion_protection = var.deletion_protection
-
-  machine_type = var.sql_machine_type
-
-  db_name     = var.db_name
-  db_user     = var.db_user
-  db_password = var.db_password
-}
-
-module "cloudrun" {
-  source        = "./modules/cloudrun"
-  project_id    = var.project_id
-  cloudrun_name = var.cloudrun_name
-  location      = var.region
-  image         = var.cloudrun_image
-  env_vars      = var.cloudrun_env_vars
-
-  allow_unauthenticated = var.cloudrun_allow_unauthenticated
-}
-
-module "gke" {
-  source       = "./modules/gke"
-  project_id   = var.project_id
-  cluster_name = var.gke_cluster_name
-  region       = var.region
-  network      = module.vpc.network_self_link
-  subnetwork   = module.vpc.subnet_self_link
-
-  machine_type = var.gke_machine_type
-  node_count   = var.gke_node_count
-}
-
-module "loadbalancer" {
-  source     = "./modules/loadbalancer"
+# DATA SOURCES
+data "google_project" "existing" {
+  count      = var.create_project ? 0 : 1
   project_id = var.project_id
-  name       = var.lb_name
 }
 
+# LOCAL VALUES
+locals {
+  # Common labels applied to all resources
+  common_labels = merge(
+    var.labels,
+    {
+      managed_by = "terraform"
+      project    = var.project_id
+      created_at = formatdate("YYYY-MM-DD", timestamp())
+    }
+  )
+
+  # Project reference
+  project_id = var.create_project ? module.project[0].project_id : var.project_id
+
+  # Network references
+  network_name   = var.enable_vpc ? module.vpc[0].network_name : ""
+  network_id     = var.enable_vpc ? module.vpc[0].network_id : ""
+  primary_subnet = var.enable_vpc && length(module.vpc[0].subnets) > 0 ? values(module.vpc[0].subnets)[0] : null
+
+  # Feature flags
+  enable_compute      = var.enable_compute && length(var.instance_templates) > 0
+  enable_cloudsql     = var.enable_cloudsql && var.cloudsql_instance_name != ""
+  enable_cloudrun     = var.enable_cloudrun && length(var.cloudrun_services) > 0
+  enable_gke          = var.enable_gke && var.gke_cluster_name != ""
+  enable_loadbalancer = var.enable_loadbalancer && var.loadbalancer_name != ""
+  enable_pubsub       = var.enable_pubsub && length(var.pubsub_topics) > 0
+  enable_monitoring   = var.enable_monitoring
+}
+
+# MODULE: PROJECT
+module "project" {
+  source = "./modules/project"
+  count  = var.create_project ? 1 : 0
+
+  project_id      = var.project_id
+  project_name    = var.project_id
+  organization_id = var.organization_id
+  billing_account = var.billing_account
+  labels          = local.common_labels
+  apis            = var.apis
+  iam_members     = var.project_iam_members
+}
+
+# MODULE: VPC NETWORK
+module "vpc" {
+  source = "./modules/vpc"
+  count  = var.enable_vpc ? 1 : 0
+
+  project_id = local.project_id
+  vpc_name   = var.vpc_name
+  subnets    = var.subnets
+
+  depends_on = [module.project]
+}
+
+# MODULE: CLOUD STORAGE
+module "gcs" {
+  source = "./modules/gcs"
+  count  = var.enable_gcs ? 1 : 0
+
+  project_id         = local.project_id
+  default_location   = var.gcs_default_location
+  buckets            = var.buckets
+  bucket_iam_members = var.bucket_iam_members
+  labels             = local.common_labels
+
+  depends_on = [module.project]
+}
+
+# MODULE: COMPUTE ENGINE
+module "compute" {
+  source = "./modules/compute"
+  count  = local.enable_compute ? 1 : 0
+
+  project_id              = local.project_id
+  instance_templates      = var.instance_templates
+  managed_instance_groups = var.managed_instance_groups
+  autoscalers             = var.autoscalers
+  labels                  = local.common_labels
+
+  depends_on = [module.vpc]
+}
+
+# MODULE: CLOUD SQL
+module "cloudsql" {
+  source = "./modules/cloudsql"
+  count  = local.enable_cloudsql ? 1 : 0
+
+  project_id          = local.project_id
+  instance_name       = var.cloudsql_instance_name
+  database_version    = var.cloudsql_database_version
+  region              = var.cloudsql_region != "" ? var.cloudsql_region : var.default_region
+  tier                = var.cloudsql_tier
+  disk_size_gb        = var.cloudsql_disk_size_gb
+  disk_type           = var.cloudsql_disk_type
+  disk_autoresize     = var.cloudsql_disk_autoresize
+  deletion_protection = var.cloudsql_deletion_protection
+  databases           = var.cloudsql_databases
+  users               = var.cloudsql_users
+
+  depends_on = [module.vpc]
+}
+
+#MODULE: CLOUDRUN
+module "cloudrun" {
+  source = "./modules/cloudrun"
+  count  = local.enable_cloudrun ? 1 : 0
+
+  project_id     = local.project_id
+  default_region = var.default_region
+  services       = var.cloudrun_services
+  iam_members    = var.cloudrun_iam_members
+  labels         = local.common_labels
+
+  depends_on = [module.project]
+}
+
+# MODULE: GKE
+module "gke" {
+  source = "./modules/gke"
+  count  = local.enable_gke ? 1 : 0
+
+  project_id   = local.project_id
+  cluster_name = var.gke_cluster_name
+  region       = var.gke_region != "" ? var.gke_region : var.default_region
+  zone         = var.gke_zone
+  regional     = var.gke_regional
+  network      = var.enable_vpc ? module.vpc[0].network_name : var.gke_network
+  subnetwork   = var.enable_vpc ? keys(module.vpc[0].subnets)[0] : var.gke_subnetwork
+  node_pools   = var.gke_node_pools
+  labels       = local.common_labels
+
+  depends_on = [module.vpc]
+}
+
+# MODULE: LB
+module "loadbalancer" {
+  source = "./modules/loadbalancer"
+  count  = local.enable_loadbalancer ? 1 : 0
+
+  project_id        = local.project_id
+  name              = var.loadbalancer_name
+  create_static_ip  = var.lb_create_static_ip
+  protocol          = var.lb_protocol
+  backend_port_name = var.lb_backend_port_name
+  backend_timeout   = var.lb_backend_timeout
+  health_check_port = var.lb_health_check_port
+  health_check_path = var.lb_health_check_path
+  enable_ssl        = var.lb_enable_ssl
+  ssl_certificates  = var.lb_ssl_certificates
+
+  depends_on = [module.compute, module.gke]
+}
+
+# MODULE: PUB/SUB
 module "pubsub" {
-  source            = "./modules/pubsub"
-  project_id        = var.project_id
-  topic_name        = var.topic_name
-  subscription_name = var.subscription_name
-  labels            = var.pubsub_labels
+  source = "./modules/pubsub"
+  count  = local.enable_pubsub ? 1 : 0
+
+  project_id               = local.project_id
+  topics                   = var.pubsub_topics
+  subscriptions            = var.pubsub_subscriptions
+  topic_iam_members        = var.pubsub_topic_iam_members
+  subscription_iam_members = var.pubsub_subscription_iam_members
+  labels                   = local.common_labels
+
+  depends_on = [module.project]
 }
 
+# MODULE: MONITORING & LOGGING
 module "monitoring" {
-  source        = "./modules/monitoring"
-  project_id    = var.project_id
-  name_prefix   = var.alert_name_prefix
-  cpu_threshold = var.alert_cpu_threshold
-  logs_bucket   = var.monitoring_logs_bucket
+  source = "./modules/monitoring"
+  count  = local.enable_monitoring ? 1 : 0
+
+  project_id            = local.project_id
+  notification_channels = var.monitoring_notification_channels
+  alert_policies        = var.monitoring_alert_policies
+  dashboards            = var.monitoring_dashboards
+  log_sinks             = var.monitoring_log_sinks
+  log_metrics           = var.monitoring_log_metrics
+  labels                = local.common_labels
+
+  depends_on = [module.project]
 }

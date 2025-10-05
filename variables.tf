@@ -2,21 +2,37 @@
 variable "project_id" {
   description = "Unique ID for the new GCP project (also used as its name)."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{4,28}[a-z0-9]$", var.project_id))
+    error_message = "Project ID must be 6-30 characters, start with a letter, and contain only lowercase letters, numbers, and hyphens."
+  }
 }
 
 variable "organization_id" {
   description = "GCP Organization ID to associate with the project."
   type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]+$", var.organization_id))
+    error_message = "Organization ID must be numeric."
+  }
 }
 
 variable "billing_account" {
   description = "Billing account ID (format: XXXXXX-XXXXXX-XXXXXX)."
   type        = string
+
+  validation {
+    condition     = can(regex("^[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}$", var.billing_account))
+    error_message = "Billing account must be in format: XXXXXX-XXXXXX-XXXXXX."
+  }
 }
 
-variable "region" {
+variable "default_region" {
   description = "Region for the resources in this project"
   type        = string
+  default     = "europe-west12"
 }
 
 variable "labels" {
@@ -25,241 +41,378 @@ variable "labels" {
   default     = {}
 }
 
+variable "create_project" {
+  description = "Whether to create a new GCP project"
+  type        = bool
+  default     = true
+}
+
+# MODULE: PROJECT
+
 variable "apis" {
   description = "List of APIs to enable for the project."
   type        = list(string)
-  default     = []
+  default = [
+    "compute.googleapis.com",
+    "iam.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "serviceusage.googleapis.com",
+    "storage-api.googleapis.com",
+    "logging.googleapis.com",
+    "monitoring.googleapis.com"
+  ]
 }
 
-variable "create_service_account" {
-  description = "Whether to create a default service account in the project."
+variable "project_iam_members" {
+  description = "IAM role to member mappings for the project"
+  type        = map(string)
+  default     = {}
+}
+
+# MODULE: VPC
+variable "enable_vpc" {
+  description = "Enable VPC network creation"
   type        = bool
-  default     = false
+  default     = true
 }
-
-variable "service_account_roles" {
-  description = <<EOT
-List of IAM roles to attach to the default service account if created.
-Example: ["roles/editor", "roles/iam.serviceAccountUser"]
-EOT
-  type        = list(string)
-  default     = []
-}
-
-# VPC Module
 variable "vpc_name" {
   description = "Name of the VPC network"
   type        = string
 }
 
-variable "subnet_name" {
-  description = "Name of the subnet"
-  type        = string
+variable "subnets" {
+  description = "Map of subnets to create"
+  type = map(object({
+    ip_cidr_range = string
+    region        = string
+  }))
+  default = {}
 }
 
-variable "cidr" {
-  description = "CIDR range for the subnet"
-  type        = string
-}
-
-# GCS Module
-variable "bucket_name" {
-  description = "Name of the storage bucket"
-  type        = string
-}
-
-variable "location" {
-  description = "Location for the storage bucket"
-  type        = string
-}
-
-variable "storage_class" {
-  description = "Storage class (STANDARD, NEARLINE, COLDLINE, ARCHIVE)."
-  type        = string
-  default     = "STANDARD"
-}
-
-variable "force_destroy" {
-  description = "Set to true to delete bucket even if it contains objects."
-  type        = bool
-  default     = false
-}
-
-variable "versioning" {
-  description = "Enable object versioning."
-  type        = bool
-  default     = false
-}
-
-variable "uniform_access" {
-  description = "Enable uniform bucket-level access."
+# MODULE: GCS
+variable "enable_gcs" {
+  description = "Enable bucket creation"
   type        = bool
   default     = true
 }
 
-# Compute Module
-variable "instance_name" {
-  description = "The name of the VM instance"
+variable "gcs_default_location" {
+  description = "Default location for GCS buckets"
   type        = string
+  default     = "US"
 }
 
-variable "machine_type" {
-  description = "The machine type of the VM instance"
-  type        = string
+variable "buckets" {
+  description = "Map of GCS buckets to create"
+  type = map(object({
+    location                    = optional(string)
+    storage_class               = optional(string)
+    uniform_bucket_level_access = optional(bool)
+    versioning                  = optional(bool)
+    force_destroy               = optional(bool)
+    labels                      = optional(map(string))
+  }))
+  default = {}
 }
 
-variable "zone" {
-  description = "Zone to deploy the VM (e.g., us-central1-a)."
-  type        = string
+variable "bucket_iam_members" {
+  description = "IAM members for buckets"
+  type = map(object({
+    bucket = string
+    role   = string
+    member = string
+  }))
+  default = {}
 }
 
-variable "image" {
-  description = "The boot disk image for the VM instance"
-  type        = string
+# MODULE: COMPUTE
+variable "enable_compute" {
+  description = "Enable Compute Engine resources"
+  type        = bool
+  default     = false
 }
 
-variable "disk_size_gb" {
-  description = "Boot disk size in GB."
+variable "instance_templates" {
+  description = "Map of instance templates"
+  type        = any
+  default     = {}
+}
+
+variable "managed_instance_groups" {
+  description = "Map of managed instance groups"
+  type        = any
+  default     = {}
+}
+
+variable "autoscalers" {
+  description = "Map of autoscaler configurations"
+  type        = any
+  default     = {}
+}
+
+# MODULE: CLOUDSQL
+variable "enable_cloudsql" {
+  description = "Enable Cloud SQL database"
+  type        = bool
+  default     = false
+}
+
+variable "cloudsql_instance_name" {
+  description = "Cloud SQL instance name"
+  type        = string
+  default     = ""
+}
+
+variable "cloudsql_database_version" {
+  description = "Database version (POSTGRES_15, MYSQL_8_0, etc.)"
+  type        = string
+  default     = "POSTGRES_15"
+}
+
+variable "cloudsql_region" {
+  description = "Cloud SQL region (defaults to default_region if empty)"
+  type        = string
+  default     = ""
+}
+
+variable "cloudsql_tier" {
+  description = "Machine tier for Cloud SQL"
+  type        = string
+  default     = "db-f1-micro"
+}
+
+variable "cloudsql_disk_size_gb" {
+  description = "Disk size in GB"
   type        = number
-  default     = 20
+  default     = 10
 }
 
-variable "network" {
-  description = "The network for the VM instance"
+variable "cloudsql_disk_type" {
+  description = "Disk type (PD_SSD or PD_HDD)"
   type        = string
+  default     = "PD_SSD"
 }
 
-variable "subnetwork" {
-  description = "Subnetwork name or self_link."
-  type        = string
+variable "cloudsql_disk_autoresize" {
+  description = "Enable automatic disk size increase"
+  type        = bool
+  default     = true
 }
 
-variable "tags" {
-  description = "Optional network tags for firewall rules."
+variable "cloudsql_deletion_protection" {
+  description = "Enable deletion protection"
+  type        = bool
+  default     = true
+}
+
+variable "cloudsql_databases" {
+  description = "List of databases to create"
   type        = list(string)
   default     = []
 }
 
-# Cloud SQL Module
-variable "sql_instance_name" {
-  description = "the name of the Cloud SQL instance"
-  type        = string
+variable "cloudsql_users" {
+  description = "Map of database users"
+  type = map(object({
+    password = string
+  }))
+  default   = {}
+  sensitive = true
 }
 
-variable "database_version" {
-  description = "the database version for the Cloud SQL instance"
-  type        = string
-}
-
-variable "sql_machine_type" {
-  description = "the machine type for the Cloud SQL instance"
-  type        = string
-}
-
-variable "db_name" {
-  description = "Default database name."
-  type        = string
-}
-
-variable "db_user" {
-  description = "Database username."
-  type        = string
-}
-
-variable "db_password" {
-  description = "Database user password."
-  type        = string
-  sensitive   = true
-}
-
-variable "deletion_protection" {
-  description = "Prevent accidental deletion."
-  type        = bool
-  default     = true
-}
-
-# Cloudrun module
-variable "cloudrun_name" {
-  description = "The name of the Cloud Run service"
-  type        = string
-}
-variable "cloudrun_image" {
-  description = "the container image to deploy to Cloud Run"
-  type        = string
-}
-
-variable "cloudrun_env_vars" {
-  description = "Environment variables for the container."
-  type        = map(string)
-  default     = {}
-}
-
-variable "cloudrun_allow_unauthenticated" {
-  description = "Allow public (unauthenticated) access to Cloud Run."
+# MODULE: CLOUDRUN
+variable "enable_cloudrun" {
+  description = "Enable Cloud Run services"
   type        = bool
   default     = false
 }
 
-# GKE Module
-variable "gke_cluster_name" {
-  description = "Name of the GKE cluster."
-  type        = string
-}
-
-variable "gke_node_count" {
-  description = "Number of nodes in the node pool."
-  type        = number
-  default     = 1
-}
-
-variable "gke_machine_type" {
-  description = "Machine type for nodes (e.g., e2-medium)."
-  type        = string
-  default     = "e2-medium"
-}
-
-# Loadbalancer Module
-variable "lb_name" {
-  description = "Base name prefix for all load balancer resources."
-  type        = string
-}
-
-# Pub/Sub Module
-variable "topic_name" {
-  description = "Name of the Pub/Sub topic."
-  type        = string
-}
-
-variable "subscription_name" {
-  description = "Name of the Pub/Sub subscription."
-  type        = string
-}
-
-variable "pubsub_labels" {
-  description = "Optional labels to apply to the Pub/Sub topic."
-  type        = map(string)
+variable "cloudrun_services" {
+  description = "Map of Cloud Run services"
+  type        = any
   default     = {}
 }
 
-# Monitoring Module
-variable "alert_name_prefix" {
-  description = "Prefix to use for alert policy and sink names."
-  type        = string
+variable "cloudrun_iam_members" {
+  description = "IAM members for Cloud Run services"
+  type        = any
+  default     = {}
 }
 
-variable "alert_cpu_threshold" {
-  description = "CPU utilization percentage that triggers the alert."
+# MODULE: GKE
+variable "enable_gke" {
+  description = "Enable Google Kubernetes Engine cluster"
+  type        = bool
+  default     = false
+}
+
+variable "gke_cluster_name" {
+  description = "GKE cluster name"
+  type        = string
+  default     = ""
+}
+
+variable "gke_region" {
+  description = "GKE region (defaults to default_region if empty)"
+  type        = string
+  default     = ""
+}
+
+variable "gke_zone" {
+  description = "GKE zone for zonal clusters"
+  type        = string
+  default     = null
+}
+
+variable "gke_regional" {
+  description = "Create regional cluster (recommended)"
+  type        = bool
+  default     = true
+}
+
+variable "gke_network" {
+  description = "VPC network name (used if enable_vpc is false)"
+  type        = string
+  default     = ""
+}
+
+variable "gke_subnetwork" {
+  description = "VPC subnetwork name (used if enable_vpc is false)"
+  type        = string
+  default     = ""
+}
+
+variable "gke_node_pools" {
+  description = "Map of node pools"
+  type        = any
+  default     = {}
+}
+
+# MODULE: LB
+variable "enable_loadbalancer" {
+  description = "Enable HTTP(S) load balancer"
+  type        = bool
+  default     = false
+}
+
+variable "loadbalancer_name" {
+  description = "Load balancer name"
+  type        = string
+  default     = ""
+}
+
+variable "lb_create_static_ip" {
+  description = "Create static IP for load balancer"
+  type        = bool
+  default     = true
+}
+
+variable "lb_protocol" {
+  description = "Backend protocol (HTTP or HTTPS)"
+  type        = string
+  default     = "HTTP"
+}
+
+variable "lb_backend_port_name" {
+  description = "Named port for backends"
+  type        = string
+  default     = "http"
+}
+
+variable "lb_backend_timeout" {
+  description = "Backend timeout in seconds"
+  type        = number
+  default     = 30
+}
+
+variable "lb_health_check_port" {
+  description = "Health check port"
   type        = number
   default     = 80
 }
 
-variable "monitoring_logs_bucket" {
-  description = "Name of the GCS bucket to receive exported logs."
+variable "lb_health_check_path" {
+  description = "Health check path"
   type        = string
+  default     = "/"
 }
 
-variable "alert_notification_channels" {
-  description = "List of Cloud Monitoring notification channel IDs."
+variable "lb_enable_ssl" {
+  description = "Enable SSL/HTTPS"
+  type        = bool
+  default     = false
+}
+
+variable "lb_ssl_certificates" {
+  description = "List of SSL certificate self links"
   type        = list(string)
   default     = []
+}
+
+# MODULE: PUB/SUB
+variable "enable_pubsub" {
+  description = "Enable Pub/Sub resources"
+  type        = bool
+  default     = false
+}
+
+variable "pubsub_topics" {
+  description = "Map of Pub/Sub topics"
+  type        = any
+  default     = {}
+}
+
+variable "pubsub_subscriptions" {
+  description = "Map of Pub/Sub subscriptions"
+  type        = any
+  default     = {}
+}
+
+variable "pubsub_topic_iam_members" {
+  description = "IAM members for topics"
+  type        = any
+  default     = {}
+}
+
+variable "pubsub_subscription_iam_members" {
+  description = "IAM members for subscriptions"
+  type        = any
+  default     = {}
+}
+
+# MODULE: MONITORING
+variable "enable_monitoring" {
+  description = "Enable monitoring and logging resources"
+  type        = bool
+  default     = true
+}
+
+variable "monitoring_notification_channels" {
+  description = "Map of notification channels"
+  type        = any
+  default     = {}
+}
+
+variable "monitoring_alert_policies" {
+  description = "Map of alert policies"
+  type        = any
+  default     = {}
+}
+
+variable "monitoring_dashboards" {
+  description = "Map of monitoring dashboards"
+  type        = any
+  default     = {}
+}
+
+variable "monitoring_log_sinks" {
+  description = "Map of log sinks"
+  type        = any
+  default     = {}
+}
+
+variable "monitoring_log_metrics" {
+  description = "Map of log-based metrics"
+  type        = any
+  default     = {}
 }
