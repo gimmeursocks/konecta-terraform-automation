@@ -3,29 +3,39 @@ variable "project_id" {
   type        = string
 }
 
-variable "cloudrun_name" {
-  description = "The name of the Cloud Run service"
+variable "default_region" {
+  description = "Default region for Cloud Run services"
   type        = string
+  default     = "europe-west12"
 }
 
-variable "location" {
-  description = "The location (region) for the Cloud Run service"
-  type        = string
+variable "services" {
+  description = "Map of Cloud Run services"
+  type = map(object({
+    image                 = string
+    region                = optional(string)
+    cpu                   = optional(string)
+    memory                = optional(string)
+    allow_unauthenticated = optional(bool)
+    vpc_connector         = optional(string)
+    vpc_egress            = optional(string)
+    env_vars              = optional(map(string))
+    labels                = optional(map(string))
+  }))
 }
 
-variable "image" {
-  description = "the container image to deploy to Cloud Run"
-  type        = string
+variable "iam_members" {
+  description = "IAM members for Cloud Run services"
+  type = map(object({
+    service = string
+    role    = string
+    member  = string
+  }))
+  default = {}
 }
 
-variable "env_vars" {
-  description = "Environment variables for the container."
+variable "labels" {
+  description = "Default labels"
   type        = map(string)
   default     = {}
-}
-
-variable "allow_unauthenticated" {
-  description = "Allow public (unauthenticated) access to Cloud Run."
-  type        = bool
-  default     = false
 }

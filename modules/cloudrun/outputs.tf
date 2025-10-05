@@ -1,9 +1,9 @@
-output "cloud_run_url" {
-  description = "Public URL of the Cloud Run service."
-  value       = google_cloud_run_service.service.status[0].url
+output "service_urls" {
+  description = "Map of Cloud Run service URLs"
+  value       = { for k, v in google_cloud_run_v2_service.services : k => v.uri }
 }
 
-output "service_name" {
-  description = "Name of the Cloud Run service."
-  value       = google_cloud_run_service.service.name
+output "service_names" {
+  description = "Map of Cloud Run service names"
+  value       = { for k, v in google_cloud_run_v2_service.services : k => v.name }
 }

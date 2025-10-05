@@ -1,37 +1,63 @@
-resource "google_cloud_run_service" "service" {
+resource "google_cloud_run_v2_service" "services" {
+  for_each = var.services
+
   project  = var.project_id
-  name     = var.cloudrun_name
-  location = var.location
+  name     = each.key
+  location = lookup(each.value, "region", var.default_region)
 
   template {
-    spec {
-      containers {
-        image = var.image
+    containers {
+      image = each.value.image
 
-        dynamic "env" {
-          for_each = var.env_vars
-          content {
-            name  = env.key
-            value = env.value
-          }
+      dynamic "env" {
+        for_each = lookup(each.value, "env_vars", {})
+        content {
+          name  = env.key
+          value = env.value
         }
+      }
+      resources {
+        limits = {
+          cpu    = lookup(each.value, "cpu", "1000m")
+          memory = lookup(each.value, "memory", "512Mi")
+        }
+      }
+    }
 
+    dynamic "vpc_access" {
+      for_each = lookup(each.value, "vpc_connector", null) != null ? [1] : []
+      content {
+        connector = each.value.vpc_connector
+        egress    = lookup(each.value, "vpc_egress", "PRIVATE_RANGES_ONLY")
       }
     }
   }
 
   traffic {
-    percent         = 100
-    latest_revision = true
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
   }
+
+  labels = merge(var.labels, lookup(each.value, "labels", {}))
 }
 
 # Allows unauthenticated access if requested
 resource "google_cloud_run_service_iam_member" "invoker" {
-  count    = var.allow_unauthenticated ? 1 : 0
+  for_each = { for k, v in var.services : k => v if lookup(v, "allow_unauthenticated", false) }
+
   project  = var.project_id
-  location = var.location
-  service  = google_cloud_run_service.service.name
+  location = google_cloud_run_v2_service.services[each.key].location
+  service  = google_cloud_run_v2_service.services[each.key].name
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+
+resource "google_cloud_run_service_iam_member" "members" {
+  for_each = var.iam_members
+
+  project  = var.project_id
+  location = google_cloud_run_v2_service.services[each.value.service].location
+  service  = google_cloud_run_v2_service.services[each.value.service].name
+  role     = each.value.role
+  member   = each.value.member
 }
