@@ -3,44 +3,45 @@ variable "project_id" {
   type        = string
 }
 
-variable "instance_name" {
-  description = "The name of the VM instance"
-  type        = string
+variable "instance_templates" {
+  description = "Map of instance templates"
+  type = map(object({
+    machine_type = string
+    source_image = string
+    network      = string
+    subnetwork   = string
+    region       = optional(string)
+    disk_size_gb = optional(number)
+    tags         = optional(list(string))
+    labels       = optional(map(string))
+  }))
+  default = {}
 }
 
-variable "machine_type" {
-  description = "The machine type of the VM instance"
-  type        = string
+variable "managed_instance_groups" {
+  description = "Map of managed instance groups"
+  type = map(object({
+    template    = string
+    zone        = string
+    target_size = optional(number)
+  }))
+  default = {}
 }
 
-variable "zone" {
-  description = "Zone to deploy the VM (e.g., us-central1-a)."
-  type        = string
+variable "autoscalers" {
+  description = "Map of autoscalers"
+  type = map(object({
+    mig             = string
+    max_replicas    = number
+    min_replicas    = number
+    cooldown_period = optional(number)
+    cpu_target      = optional(number)
+  }))
+  default = {}
 }
 
-variable "image" {
-  description = "The boot disk image for the VM instance"
-  type        = string
-}
-
-variable "disk_size_gb" {
-  description = "Boot disk size in GB."
-  type        = number
-  default     = 20
-}
-
-variable "network" {
-  description = "The network for the VM instance"
-  type        = string
-}
-
-variable "subnetwork" {
-  description = "Subnetwork name or self_link."
-  type        = string
-}
-
-variable "tags" {
-  description = "Optional network tags for firewall rules."
-  type        = list(string)
-  default     = []
+variable "labels" {
+  description = "Default labels"
+  type        = map(string)
+  default     = {}
 }

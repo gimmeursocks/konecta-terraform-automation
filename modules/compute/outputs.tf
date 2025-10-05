@@ -1,14 +1,9 @@
-output "instance_name" {
-  description = "Name of the VM instance."
-  value       = google_compute_instance.vm.name
+output "instance_template_ids" {
+  description = "Map of instance template IDs"
+  value       = { for k, v in google_compute_instance_template.templates : k => v.id }
 }
 
-output "instance_self_link" {
-  description = "Self link (API URL) of the VM instance."
-  value       = google_compute_instance.vm.self_link
-}
-
-output "instance_ip" {
-  description = "External IP of the VM instance."
-  value       = google_compute_instance.vm.network_interface[0].access_config[0].nat_ip
+output "mig_instance_groups" {
+  description = "Map of MIG instance group URLs"
+  value       = { for k, v in google_compute_instance_group_manager.migs : k => v.instance_group }
 }
