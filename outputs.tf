@@ -77,17 +77,14 @@ output "mig_instance_groups" {
 }
 
 # CLOUD SQL OUTPUTS
-
 output "cloudsql_connection_name" {
   description = "Cloud SQL instance connection name"
   value       = local.enable_cloudsql ? module.cloudsql[0].instance_connection_name : null
-  sensitive   = true
 }
 
 output "cloudsql_instance_ip" {
   description = "Cloud SQL instance IP address"
   value       = local.enable_cloudsql ? module.cloudsql[0].instance_ip_address : null
-  sensitive   = true
 }
 
 output "cloudsql_database_names" {
@@ -122,13 +119,11 @@ output "gke_cluster_name" {
 output "gke_cluster_endpoint" {
   description = "GKE cluster endpoint"
   value       = local.enable_gke ? module.gke[0].cluster_endpoint : null
-  sensitive   = true
 }
 
 output "gke_cluster_ca_certificate" {
   description = "GKE cluster CA certificate"
   value       = local.enable_gke ? module.gke[0].cluster_ca_certificate : null
-  sensitive   = true
 }
 
 output "gke_node_pool_names" {

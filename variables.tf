@@ -166,7 +166,7 @@ variable "cloudsql_instance_name" {
 }
 
 variable "cloudsql_database_version" {
-  description = "Database version (POSTGRES_15, MYSQL_8_0, etc.)"
+  description = "Database version"
   type        = string
   default     = "POSTGRES_15"
 }
@@ -218,8 +218,7 @@ variable "cloudsql_users" {
   type = map(object({
     password = string
   }))
-  default   = {}
-  sensitive = true
+  default = {}
 }
 
 # MODULE: CLOUDRUN
