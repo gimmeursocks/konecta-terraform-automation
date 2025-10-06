@@ -39,10 +39,11 @@ class TerraformDeployer:
     """Handles Terraform deployment operations"""
 
     def __init__(self, config_file: str, workspace: Optional[str] = None,
-                 auto_approve: bool = False):
+                 auto_approve: bool = False, dry_run: bool = False):
         self.config_file = Path(config_file)
         self.workspace = workspace
         self.auto_approve = auto_approve
+        self.dry_run = dry_run
         self.script_dir = Path(__file__).parent
         self.root_dir = self.script_dir.parent
         self.tfvars_file = self.root_dir / "terraform.tfvars"
@@ -241,7 +242,7 @@ class TerraformDeployer:
             return False
 
         # Step 4: Initialize Terraform
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Initializing Terraform")
         logger.info("=" * 70)
         backend_config_file = self.generate_backend_config()
@@ -257,27 +258,31 @@ class TerraformDeployer:
             return False
 
         # Step 6: Validate configuration
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Validating Configuration")
         logger.info("=" * 70)
         if not self.run_terraform_command(['validate']):
             return False
 
         # Step 7: Format step
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Formatting Code")
         logger.info("=" * 70)
         self.run_terraform_command(['fmt', '-recursive'], check=False)
 
         # Step 8: Plan
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Creating Execution Plan")
         logger.info("=" * 70)
         if not self.run_terraform_command(['plan', '-out=tfplan']):
             return False
 
+        if self.dry_run:
+
+            return False
+
         # Step 9: Review and apply
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Ready to Apply Changes")
         logger.info("=" * 70)
 
@@ -294,12 +299,12 @@ class TerraformDeployer:
             return False
 
         # Step 10: Show outputs
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Deployment Outputs")
         logger.info("=" * 70)
         self.run_terraform_command(['output'])
 
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Deployment Completed Successfully!")
         logger.info("=" * 70)
 
@@ -336,6 +341,12 @@ Examples:
         action='store_true'
     )
 
+    parser.add_argument(
+        '-d', '--dry-run',
+        help='Only plan the infrastructure',
+        action='store_true'
+    )
+
     verbosity_group = parser.add_mutually_exclusive_group()
 
     verbosity_group.add_argument(
@@ -364,6 +375,7 @@ Examples:
         config_file=args.config,
         workspace=args.workspace,
         auto_approve=args.auto_approve,
+        dry_run=args.dry_run
     )
 
     # Execute deployment

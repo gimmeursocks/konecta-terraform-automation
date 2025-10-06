@@ -127,7 +127,7 @@ class TerraformDestroyer:
 
     def show_resources(self) -> int:
         """Display resources that will be destroyed"""
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Resources to be destroyed:")
         logger.info("=" * 70)
 
@@ -309,7 +309,7 @@ class TerraformDestroyer:
             return False
 
         # Step 3: Initialize Terraform
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Initializing Terraform")
         logger.info("=" * 70)
         backend_config_file = self.generate_backend_config()
@@ -330,7 +330,7 @@ class TerraformDestroyer:
             return False
 
         # Step 6: Generate destroy plan
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Generating Destruction Plan")
         logger.info("=" * 70)
 
@@ -349,7 +349,7 @@ class TerraformDestroyer:
             logger.warning("Auto-approve enabled, skipping confirmation")
 
         # Step 8: Execute destruction
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Destroying Infrastructure")
         logger.info("=" * 70)
 
@@ -361,7 +361,7 @@ class TerraformDestroyer:
             return False
 
         # Step 9: Verify destruction
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Verifying Destruction")
         logger.info("=" * 70)
 
@@ -373,7 +373,7 @@ class TerraformDestroyer:
         else:
             logger.info("All resources destroyed successfully")
 
-        logger.info("\n" + "=" * 70)
+        logger.info("=" * 70)
         logger.info("Destruction Process Completed")
         logger.info("=" * 70)
 
