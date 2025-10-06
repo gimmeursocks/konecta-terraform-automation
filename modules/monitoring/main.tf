@@ -25,8 +25,8 @@ resource "google_monitoring_alert_policy" "policies" {
     condition_threshold {
       filter          = each.value.condition.filter
       duration        = coalesce(each.value.condition.duration, "60s")
-      comparison      = lookup(each.value.condition, "comparison", "COMPARISON_GT")
-      threshold_value = lookup(each.value.condition, "threshold_value", 0)
+      comparison      = coalesce(each.value.condition.comparison, "COMPARISON_GT")
+      threshold_value = coalesce(each.value.condition.threshold_value, 0)
     }
   }
 

@@ -1,9 +1,10 @@
 resource "google_cloud_run_v2_service" "services" {
   for_each = var.services
 
-  project  = var.project_id
-  name     = each.key
-  location = lookup(each.value, "region", var.default_region)
+  project             = var.project_id
+  name                = each.key
+  location            = lookup(each.value, "region", var.default_region)
+  deletion_protection = false
 
   template {
     containers {
