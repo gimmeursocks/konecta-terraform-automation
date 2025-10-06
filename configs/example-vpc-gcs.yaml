@@ -10,6 +10,7 @@ labels:
   owner: intern
   project_type: "development"
 
+# Enabled APIs
 apis:
   - compute.googleapis.com
   - storage-api.googleapis.com
