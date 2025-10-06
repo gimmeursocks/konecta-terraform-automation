@@ -3,6 +3,8 @@ data "google_project" "existing" {
   count      = var.create_project ? 0 : 1
   project_id = var.project_id
 }
+# TO PERSIST TIME BETWEEN RUNS
+resource "time_static" "created" {}
 
 # LOCAL VALUES
 locals {
@@ -12,7 +14,7 @@ locals {
     {
       managed_by = "terraform"
       project    = var.project_id
-      created_at = formatdate("YYYY-MM-DD", timestamp())
+      created_at = formatdate("YYYY-MM-DD", time_static.created.rfc3339)
     }
   )
 
@@ -22,7 +24,7 @@ locals {
   # Network references
   network_name   = var.enable_vpc ? module.vpc[0].network_name : ""
   network_id     = var.enable_vpc ? module.vpc[0].network_id : ""
-  primary_subnet = var.enable_vpc && length(module.vpc[0].subnets) > 0 ? values(module.vpc[0].subnets)[0] : null
+  primary_subnet = var.enable_vpc ? (length(module.vpc[0].subnets) > 0 ? values(module.vpc[0].subnets)[0] : null) : null
 
   # Feature flags
   enable_compute      = var.enable_compute && length(var.instance_templates) > 0

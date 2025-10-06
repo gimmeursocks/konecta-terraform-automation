@@ -16,7 +16,7 @@ resource "google_monitoring_alert_policy" "policies" {
 
   project      = var.project_id
   display_name = each.key
-  combiner     = lookup(each.value, "combiner", "OR")
+  combiner     = coalesce(each.value.combiner, "OR")
   enabled      = lookup(each.value, "enabled", true)
 
   conditions {
@@ -24,7 +24,7 @@ resource "google_monitoring_alert_policy" "policies" {
 
     condition_threshold {
       filter          = each.value.condition.filter
-      duration        = lookup(each.value.condition, "duration", "60s")
+      duration        = coalesce(each.value.condition.duration, "60s")
       comparison      = lookup(each.value.condition, "comparison", "COMPARISON_GT")
       threshold_value = lookup(each.value.condition, "threshold_value", 0)
     }
@@ -35,9 +35,12 @@ resource "google_monitoring_alert_policy" "policies" {
     google_monitoring_notification_channel.channels[channel].id
   ]
 
-  documentation {
-    content   = lookup(each.value, "documentation", "Alert triggered")
-    mime_type = "text/markdown"
+  dynamic "documentation" {
+    for_each = lookup(each.value, "documentation", null) != null ? [1] : []
+    content {
+      content   = lookup(each.value, "documentation", "Alert triggered for ${each.key}")
+      mime_type = "text/markdown"
+    }
   }
 
   user_labels = merge(var.labels, lookup(each.value, "user_labels", {}))

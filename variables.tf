@@ -74,7 +74,7 @@ variable "project_iam_members" {
 variable "enable_vpc" {
   description = "Enable VPC network creation"
   type        = bool
-  default     = true
+  default     = false
 }
 variable "network_name" {
   description = "Name of the VPC network"
@@ -95,7 +95,7 @@ variable "subnets" {
 variable "enable_gcs" {
   description = "Enable bucket creation"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "gcs_default_location" {
