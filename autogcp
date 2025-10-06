@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+COMMAND="$1"
+shift || true  # Remove the command (apply/destroy), leave only flags/args
+
+case "$COMMAND" in
+  apply)
+    python "scripts/deploy.py" "$@"
+    ;;
+  destroy)
+    python "scripts/destroy.py" "$@"
+    ;;
+  *)
+    echo "Usage: $0 {apply|destroy} [args...]"
+    echo
+    echo "Examples:"
+    echo "  $0 apply config.yaml --workspace dev --auto-approve"
+    echo "  $0 destroy config.yaml --workspace prod --target module.vpc"
+    exit 1
+    ;;
+esac
