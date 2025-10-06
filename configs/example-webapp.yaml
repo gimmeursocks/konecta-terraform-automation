@@ -1,0 +1,103 @@
+# Project config
+project_id: "konecta-autogcp-webapp"
+project_name: "Complete Web Application"
+billing_account: "01D0CC-D7A3E8-69412C"
+default_region: "europe-west12"
+
+# Labels
+labels:
+  environment: staging
+  owner: team
+
+# Enabled APIs
+apis:
+  - compute.googleapis.com
+  - storage.googleapis.com
+  - sqladmin.googleapis.com
+  - run.googleapis.com
+  - monitoring.googleapis.com
+  - logging.googleapis.com
+  - cloudresourcemanager.googleapis.com
+  - servicenetworking.googleapis.com
+
+# Feature Flags 
+enable_vpc: true
+enable_gcs: true
+enable_cloudsql: true
+enable_cloudrun: true
+enable_monitoring: true
+
+# VPC Config
+network_name: "main-vpc"
+
+subnets:
+  webapp-eu-west10:
+    ip_cidr_range: "10.20.1.0/24"
+    region: "europe-west10"
+  
+  webapp-eu-west12:
+    ip_cidr_range: "10.20.2.0/24"
+    region: "europe-west12"
+
+
+# GCS Config
+buckets:
+  konecta-webapp-project-data:
+    location: "EU"
+    storage_class: "STANDARD"
+    versioning: false
+    force_destroy: true
+  
+  konecta-webapp-project-backup:
+    location: "EU"
+    storage_class: "NEARLINE"
+    versioning: true
+    force_destroy: true
+
+# CLOUDSQL Config
+cloudsql_instance_name: "konecta-webapp-db-staging"
+cloudsql_database_version: "POSTGRES_15"
+cloudsql_region: "europe-west12"
+cloudsql_tier: "db-f1-micro"
+cloudsql_disk_size_gb: 10
+cloudsql_disk_type: "PD_SSD"
+cloudsql_disk_autoresize: true
+cloudsql_deletion_protection: false
+cloudsql_databases:
+  - "webapp_main"
+  - "webapp_cache"
+
+# CLOUDRUN Config
+cloudrun_services:
+  frontend-service:
+    image: "mirror.gcr.io/library/nginx:latest"
+    region: "us-east1"
+    port: 80
+    cpu: "2000m"
+    memory: "1Gi"
+    min_instances: 1
+    max_instances: 1
+    timeout: "300s"
+    allow_unauthenticated: true
+    env_vars:
+      ENVIRONMENT: "staging"
+      DATABASE_HOST: "konecta-webapp-db-staging"
+    labels:
+      tier: "frontend"
+
+# MONITORING Config
+monitoring_notification_channels:
+  email-dev:
+    type: "email"
+    labels:
+      email_address: "email-me@example.com"
+
+monitoring_alert_policies:
+  database-cpu-high:
+    condition:
+      display_name: "Cloud SQL High CPU"
+      filter: 'metric.type="cloudsql.googleapis.com/database/cpu/utilization" resource.type="cloudsql_database"'
+      threshold_value: 0.8
+      duration: "300s"
+    notification_channels:
+      - "email-dev"
