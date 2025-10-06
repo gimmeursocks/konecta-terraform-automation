@@ -10,9 +10,9 @@ region          = ""
 # service_account_roles  = []
 
 # VPC
-vpc_name    = ""
-subnet_name = ""
-cidr        = ""
+network_name = ""
+subnet_name  = ""
+cidr         = ""
 
 # GCS
 bucket_name = ""

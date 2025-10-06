@@ -1,6 +1,6 @@
 resource "google_compute_network" "main" {
   project                 = var.project_id
-  name                    = var.vpc_name
+  name                    = var.network_name
   auto_create_subnetworks = false
 }
 
@@ -16,7 +16,7 @@ resource "google_compute_subnetwork" "subnets" {
 
 # Optional firewall rules
 resource "google_compute_firewall" "default" {
-  name    = "${var.vpc_name}-allow-internal"
+  name    = "${var.network_name}-allow-internal"
   network = google_compute_network.main.name
   allow {
     protocol = "all"

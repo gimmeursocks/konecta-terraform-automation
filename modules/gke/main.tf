@@ -20,7 +20,7 @@ resource "google_container_node_pool" "pools" {
   project    = var.project_id
   name       = each.key
   cluster    = google_container_cluster.primary.name
-  location   = google_container_cluster.main.location
+  location   = google_container_cluster.primary.location
   node_count = lookup(each.value, "initial_node_count", 1)
 
   node_config {

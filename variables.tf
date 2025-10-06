@@ -9,14 +9,16 @@ variable "project_id" {
   }
 }
 
+variable "project_name" {
+  description = "Name of the new GCP project"
+  type        = string
+  default     = ""
+}
+
 variable "organization_id" {
   description = "GCP Organization ID to associate with the project."
   type        = string
-
-  validation {
-    condition     = can(regex("^[0-9]+$", var.organization_id))
-    error_message = "Organization ID must be numeric."
-  }
+  default     = ""
 }
 
 variable "billing_account" {
@@ -48,7 +50,6 @@ variable "create_project" {
 }
 
 # MODULE: PROJECT
-
 variable "apis" {
   description = "List of APIs to enable for the project."
   type        = list(string)
@@ -75,9 +76,10 @@ variable "enable_vpc" {
   type        = bool
   default     = true
 }
-variable "vpc_name" {
+variable "network_name" {
   description = "Name of the VPC network"
   type        = string
+  default     = "main-vpc"
 }
 
 variable "subnets" {

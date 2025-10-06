@@ -3,6 +3,7 @@ resource "google_project" "main" {
   project_id          = var.project_id
   org_id              = var.organization_id
   billing_account     = var.billing_account
+  deletion_policy     = "DELETE"
   auto_create_network = false
   labels              = var.labels
 }

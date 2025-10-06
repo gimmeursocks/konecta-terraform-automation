@@ -11,6 +11,7 @@ variable "project_id" {
 variable "organization_id" {
   description = "GCP Organization ID to associate with this project."
   type        = string
+  default     = 0
 }
 
 variable "billing_account" {

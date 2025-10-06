@@ -10,4 +10,8 @@ terraform {
       version = "~> 7.0"
     }
   }
+
+  backend "gcs" {
+    # bucket and prefix will be provided dynamically
+  }
 }

@@ -40,8 +40,8 @@ module "project" {
   count  = var.create_project ? 1 : 0
 
   project_id      = var.project_id
-  project_name    = var.project_id
-  organization_id = var.organization_id
+  project_name    = (var.project_name != "") ? var.project_name : var.project_id
+  organization_id = (var.organization_id != "") ? var.organization_id : null
   billing_account = var.billing_account
   labels          = local.common_labels
   apis            = var.apis
@@ -53,9 +53,9 @@ module "vpc" {
   source = "./modules/vpc"
   count  = var.enable_vpc ? 1 : 0
 
-  project_id = local.project_id
-  vpc_name   = var.vpc_name
-  subnets    = var.subnets
+  project_id   = local.project_id
+  network_name = var.network_name
+  subnets      = var.subnets
 
   depends_on = [module.project]
 }
