@@ -2,5 +2,5 @@
 terraform.tfvars
 .DS_Store
 *.log
-tfplan
+*tfplan
 backends/
