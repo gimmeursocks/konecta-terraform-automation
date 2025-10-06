@@ -5,6 +5,7 @@ Safely destroys Terraform-managed infrastructure with multiple safety checks.
 import yaml
 import subprocess
 import sys
+import os
 import argparse
 import logging
 import time
@@ -67,6 +68,13 @@ class TerraformDestroyer:
         if not state_file.exists():
             logger.warning("No local state file found")
             logger.debug("Checking for remote state...")
+
+        # Check GCP credentials
+        if not os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+            logger.warning(
+                "GOOGLE_APPLICATION_CREDENTIALS env not set. Using default credentials.")
+        else:
+            logger.info("GCP credentials configured")
 
         return True
 

@@ -6,6 +6,7 @@ import yaml
 import json
 import subprocess
 import sys
+import os
 import argparse
 import logging
 from pathlib import Path
@@ -58,6 +59,13 @@ class TerraformDeployer:
             return False
 
         logger.debug(f"Config file found: {self.config_file}")
+
+        # Check GCP credentials
+        if not os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+            logger.warning(
+                "GOOGLE_APPLICATION_CREDENTIALS env not set. Using default credentials.")
+        else:
+            logger.info("GCP credentials configured")
 
         return True
 
