@@ -1,0 +1,64 @@
+# Project config
+project_id: "konecta-autogcp-basic"
+project_name: "Networking and storage project"
+billing_account: "01D0CC-D7A3E8-69412C"
+default_region: "europe-west12"
+
+# Labels
+labels:
+  environment: dev
+  owner: intern
+  project_type: "development"
+
+apis:
+  - compute.googleapis.com
+  - storage-api.googleapis.com
+  - monitoring.googleapis.com
+  - logging.googleapis.com
+  - cloudresourcemanager.googleapis.com
+
+# Feature Flags 
+enable_vpc: true
+enable_gcs: true
+enable_monitoring: true
+
+# VPC Config
+network_name: "main-vpc"
+
+subnets:
+  primary-subnet:
+    ip_cidr_range: "10.10.0.0/24"
+    region: "europe-west10"
+
+
+# GCS Config
+buckets:
+  konecta-basic-project-data:
+    location: "US"
+    storage_class: "STANDARD"
+    versioning: false
+    force_destroy: true
+  
+  konecta-basic-project-backup:
+    location: "US"
+    storage_class: "NEARLINE"
+    versioning: true
+    force_destroy: true
+
+
+# MONITORING Config
+monitoring_notification_channels:
+  email-dev:
+    type: "email"
+    labels:
+      email_address: "email-me@example.com"
+
+monitoring_alert_policies:
+  bucket-usage-alert:
+    condition:
+      display_name: "High Bucket Usage"
+      filter: 'metric.type="storage.googleapis.com/storage/total_bytes" resource.type="gcs_bucket"'
+      threshold_value: 1048576  # 1MB
+      comparison: "COMPARISON_GT"
+    notification_channels:
+      - "email-dev"
