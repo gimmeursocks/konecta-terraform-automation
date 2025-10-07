@@ -40,10 +40,11 @@ class TerraformDestroyer:
     """Handles Terraform destroy operations with safety checks"""
 
     def __init__(self, config_file: Optional[str] = None, workspace: Optional[str] = None,
-                 auto_approve: bool = False, target: Optional[List[str]] = None):
+                 auto_approve: bool = False,  dry_run: bool = False, target: Optional[List[str]] = None):
         self.config_file = Path(config_file)
         self.workspace = workspace
         self.auto_approve = auto_approve
+        self.dry_run = dry_run
         self.targets = target or []
         self.script_dir = Path(__file__).parent
         self.root_dir = self.script_dir.parent
@@ -286,6 +287,9 @@ class TerraformDestroyer:
         logger.warning("\nThis action CANNOT be undone!")
         logger.warning("All infrastructure will be permanently deleted!")
 
+        if self.dry_run:
+            return False
+
         # First confirmation
         logger.info("\n" + "-" * 70)
         response1 = input(
@@ -439,6 +443,12 @@ Examples:
         action='store_true'
     )
 
+    parser.add_argument(
+        '-d', '--dry-run',
+        help='Only plan the destruction',
+        action='store_true'
+    )
+
     verbosity_group = parser.add_mutually_exclusive_group()
 
     verbosity_group.add_argument(
@@ -472,6 +482,7 @@ Examples:
         config_file=args.config,
         workspace=args.workspace,
         auto_approve=args.auto_approve,
+        dry_run=args.dry_run,
         target=args.targets,
     )
 
