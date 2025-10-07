@@ -1,0 +1,74 @@
+name: Auto Deploy GCP Projects
+
+on:
+  push:
+    paths:
+      - "configs/*.yaml" # Runs when new YAMLs or configs change
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+
+      - name: Find changed YAML configs
+        id: changed
+        run: |
+          echo "Detecting changed YAML configs..."
+          # Compare with previous commit and extract changed YAMLs in configs/
+          git fetch origin main
+          CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^configs/.*\.yaml$' || true)
+          echo "changed_files=$CHANGED" >> $GITHUB_OUTPUT
+
+      - name: Early Exit
+        run: |
+          echo "Deployment not implemented yet due to not having an org_id. Exiting successfully."
+          exit 0    
+
+      - name: Run deployments for changed YAMLs
+        if: ${{ steps.changed.outputs.changed_files != '' }}
+        run: |
+          chmod +x ./autogcp
+          for file in ${{ steps.changed.outputs.changed_files }}; do
+            echo "Deploying $file..."
+            ./autogcp apply "$file" --auto-approve
+          done
+      
+      - name: No changes detected
+        if: ${{ steps.changed.outputs.changed_files == '' }}
+        run: echo "No YAML configuration changes detected."
+
+      - name: Send Slack Notification
+        if: always()
+        run: |
+          STATUS="Deployment failed"
+          if [ "${{ steps.deploy.outcome }}" == "success" ]; then
+            STATUS="Deployment succeeded"
+          fi
+
+          MESSAGE="*Konecta-AutoGCP Update*\nRepository: \`${{ github.repository }}\`\nStatus: ${STATUS}\nCommit: <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"${MESSAGE}\"}" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
