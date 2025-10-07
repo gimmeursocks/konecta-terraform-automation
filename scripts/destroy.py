@@ -198,28 +198,50 @@ class TerraformDestroyer:
         logger.info(f"Running: terraform {cmd_str}")
 
         try:
-            result = subprocess.run(
-                ['terraform'] + command,
-                cwd=self.root_dir,
-                capture_output=True,
-                text=True,
-                check=check
-            )
+            if "destroy.tfplan" in command:
+                process = subprocess.Popen(
+                    ['terraform'] + command,
+                    cwd=self.root_dir,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1
+                )
+                for line in process.stdout:
+                    # stream directly to console
+                    logger.info(f"   {line.strip()}")
+                process.wait()
 
-            if result.stdout:
-                for line in result.stdout.splitlines():
-                    logger.info(f"   {line}")
-
-            if result.returncode == 0:
-                logger.info(f"Command completed successfully")
-                return True
+                if process.returncode == 0:
+                    logger.info("Command completed successfully")
+                    return True
+                else:
+                    logger.error(
+                        f"Command failed with exit code {process.returncode}")
+                    return False
             else:
-                if result.stderr:
-                    for line in result.stderr.splitlines():
-                        logger.error(f"   {line}")
-                logger.error(
-                    f"Command failed with exit code {result.returncode}")
-                return False
+                result = subprocess.run(
+                    ['terraform'] + command,
+                    cwd=self.root_dir,
+                    capture_output=True,
+                    text=True,
+                    check=check
+                )
+
+                if result.stdout:
+                    for line in result.stdout.splitlines():
+                        logger.info(f"   {line}")
+
+                if result.returncode == 0:
+                    logger.info(f"Command completed successfully")
+                    return True
+                else:
+                    if result.stderr:
+                        for line in result.stderr.splitlines():
+                            logger.error(f"   {line}")
+                    logger.error(
+                        f"Command failed with exit code {result.returncode}")
+                    return False
 
         except Exception as e:
             logger.error(f"Command execution error: {e}")
