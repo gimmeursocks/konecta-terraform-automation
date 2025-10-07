@@ -25,6 +25,10 @@ variable "alert_policies" {
       duration        = optional(string)
       comparison      = optional(string)
       threshold_value = optional(number)
+      aggregations = optional(object({
+        alignment_period   = optional(string)
+        per_series_aligner = optional(string)
+      }))
     })
     notification_channels = optional(list(string))
     documentation         = optional(string)

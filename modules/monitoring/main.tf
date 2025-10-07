@@ -27,7 +27,12 @@ resource "google_monitoring_alert_policy" "policies" {
       duration        = coalesce(each.value.condition.duration, "60s")
       comparison      = coalesce(each.value.condition.comparison, "COMPARISON_GT")
       threshold_value = coalesce(each.value.condition.threshold_value, 0)
+      aggregations {
+        alignment_period   = lookup(coalesce(each.value.condition.aggregations, {}), "alignment_period", "60s")
+        per_series_aligner = lookup(coalesce(each.value.condition.aggregations, {}), "per_series_aligner", "ALIGN_RATE")
+      }
     }
+
   }
 
   notification_channels = [
