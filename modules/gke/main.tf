@@ -1,7 +1,8 @@
 resource "google_container_cluster" "primary" {
-  project  = var.project_id
-  name     = var.cluster_name
-  location = var.regional ? var.region : var.zone
+  project             = var.project_id
+  name                = var.cluster_name
+  location            = var.regional ? var.region : var.zone
+  deletion_protection = false
 
   network    = var.network
   subnetwork = var.subnetwork
