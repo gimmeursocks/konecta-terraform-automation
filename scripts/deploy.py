@@ -300,7 +300,8 @@ class TerraformDeployer:
             return False
 
         if self.dry_run:
-            return False
+            logger.info("Dry run mode - skipping apply step")
+            return True
 
         # Step 9: Review and apply
         logger.info("=" * 70)

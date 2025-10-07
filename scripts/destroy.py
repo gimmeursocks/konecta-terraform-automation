@@ -287,9 +287,6 @@ class TerraformDestroyer:
         logger.warning("\nThis action CANNOT be undone!")
         logger.warning("All infrastructure will be permanently deleted!")
 
-        if self.dry_run:
-            return False
-
         # First confirmation
         logger.info("\n" + "-" * 70)
         response1 = input(
@@ -366,6 +363,10 @@ class TerraformDestroyer:
 
         if not self.run_terraform_command(plan_cmd):
             return False
+
+        if self.dry_run:
+            logger.info("Dry run enabled, skipping actual destruction")
+            return True
 
         # Step 7: Confirm destruction
         if not self.auto_approve:
