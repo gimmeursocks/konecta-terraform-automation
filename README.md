@@ -77,7 +77,7 @@ gcloud auth application-default login
 export GOOGLE_APPLICATION_CREDENTIALS=
 ```
 
-4. Create a state bucket (First time only), with the name `konecta-autogcp-terraform-state-bucket` with versioning enabled
+4. Create a state bucket (First time only) in any project, with the name `konecta-autogcp-terraform-state-bucket` with versioning enabled
 
 5. Deploy and destroy
 
@@ -87,11 +87,28 @@ export GOOGLE_APPLICATION_CREDENTIALS=
 ./autogcp destroy config.yaml --workspace prod --target module.vpc
 ```
 
+## Remote Backend
+
+This automation is configured to dynamically load the backend from a remote state, either defined in YAML or as a prefix in the aforementioned bucket, which results in these files created in `backends/`:
+
+```bash
+# backends/konecta-autogcp-basic.backend.conf
+bucket = "konecta-autogcp-terraform-state-bucket"
+prefix = "projects/konecta-autogcp-basic"
+```
+
+which is then later used inside the script to load the correct `.tfstate` file for the right project:
+
+```bash
+# In scripts/deploy.py for configs/example-vpc-gcs.yaml
+terraform init -reconfigure -backend-config=backends/konecta-autogcp-basic.backend.conf
+```
+
 ## Usage
 
-To automate the creation of a GCP project, feel free to build upon  `configs/example-project.yaml`:
+To automate the creation of a GCP project, feel free to build upon  `configs/example-project.yaml` using variables from `variables.tf`:
 
-```hcl
+```yaml
 project_id: "dev-intern-poc"
 organization_id: "YOUR_ORG_ID"
 billing_account: "XXXXXX-XXXXXX-XXXXXX"
@@ -128,6 +145,73 @@ python scripts/deploy.py config.yaml --dry-run
 - Effective catching of potential exceptions and errors
 - Ensure idempotent behavior by using the remote backend
 - Clear separation between different projects with separate YAMLs
+
+## Configuration
+
+#### Basic config
+
+Every base file must have the following:
+
+```yaml
+project_id: "dev-intern-poc"
+organization_id: "YOUR_ORG_ID"
+billing_account: "XXXXXX-XXXXXX-XXXXXX"
+```
+
+#### Enabling APIs and modules
+
+To enable APIs just add them here:
+
+```yaml
+# Enabled APIs
+apis:
+  - compute.googleapis.com
+  - iam.googleapis.com
+  ....
+```
+
+And to enable the modules, just set their boolean to true:
+
+```yaml
+# Feature Flags 
+enable_vpc: true
+enable_gcs: true
+enable_monitoring: true
+```
+
+#### Labeling a project
+
+To label a project:
+
+```yaml
+labels:
+  environment: dev
+  owner: intern
+  project_type: "development"
+```
+
+#### Configuring the modules
+
+To infer each module usage, you can refer to `variables.tf` to check what variables are optional:
+
+```yaml
+# VPC Config
+network_name: "main-vpc"
+
+subnets:
+  primary-subnet:
+    ip_cidr_range: "10.10.0.0/24"
+    region: "europe-west10"
+
+# GCS Config
+buckets:
+  konecta-basic-project-data:
+    location: "US"
+    storage_class: "STANDARD"
+    versioning: true
+    force_destroy: true
+....
+```
 
 ## Architecture Overview
 
