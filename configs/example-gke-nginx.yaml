@@ -1,0 +1,99 @@
+# Project config
+project_id: "konecta-autogcp-gke-nginx"
+project_name: "GKE Nginx Public Demo"
+billing_account: "01D0CC-D7A3E8-69412C"
+default_region: "europe-west12"
+
+# Labels
+labels:
+  environment: dev
+  owner: "team-platform"
+  project: "nginx-demo"
+
+# Enabled APIs
+apis:
+  - compute.googleapis.com
+  - container.googleapis.com
+  - storage.googleapis.com
+  - monitoring.googleapis.com
+  - logging.googleapis.com
+  - cloudresourcemanager.googleapis.com
+  - pubsub.googleapis.com
+
+# Feature Flags 
+enable_vpc: true
+enable_gcs: true
+enable_gke: true
+enable_pubsub: true
+enable_monitoring: true
+
+# VPC Config
+network_name: "gke-nginx-vpc"
+
+subnets:
+  gke-subnet:
+    ip_cidr_range: "10.50.0.0/24"
+    region: "europe-west12"
+
+# GCS Config
+buckets:
+  konecta-gke-nginx-logs:
+    location: "EU"
+    storage_class: "STANDARD"
+    versioning: false
+    force_destroy: true
+  
+  konecta-gke-nginx-config:
+    location: "EU"
+    storage_class: "STANDARD"
+    versioning: true
+    force_destroy: true
+
+# GKE Config
+gke_cluster_name: "nginx-cluster"
+gke_region: "europe-west12"
+gke_regional: false
+gke_zone: "europe-west12-a"
+
+# Node pools
+gke_node_pools:
+  default-pool:
+    machine_type: "e2-medium"
+    initial_node_count: 1
+    disk_size_gb: 30
+    spot: false
+    labels:
+      pool: "default"
+      workload: "web"
+    tags:
+      - "gke-node"
+      - "web-pool"
+
+# PUBSUB Config
+pubsub_topics:
+  nginx-access-logs:
+    message_retention_duration: "86400s"
+
+pubsub_subscriptions:
+  nginx-logs-processor:
+    topic: "nginx-access-logs"
+    ack_deadline_seconds: 60
+
+# MONITORING Config
+monitoring_notification_channels:
+  email-dev:
+    type: "email"
+    labels:
+      email_address: "email-me@example.com"
+
+monitoring_alert_policies:
+  gke-pod-restarts:
+    condition:
+      display_name: "High Pod Restart Count"
+      filter: 'metric.type="kubernetes.io/container/restart_count" resource.type="k8s_container"'
+      threshold_value: 5
+      duration: "300s"
+      comparison: "COMPARISON_GT"
+    notification_channels:
+      - "email-dev"
+    documentation: "Pods are restarting frequently. Check application logs."
